@@ -610,3 +610,52 @@ function _decision_v3p11() {
 	}
 }
 
+function _accept_helper() {
+	$contentType = _get_header_val('Content-Type');
+	if (null == $contentType) {
+		$contentType = 'application/octet-stream';
+	}
+	list($mediaType, $mediaParams) = phpmachine_util\media_type_to_detail($contentType);
+	_wrcall(array('set_metadata','mediaparams', $mediaParams));
+	$contentTypesAccepted = _resource_call('content_types_accepted');
+	// TODO figure out how to port this thing to php
+
+}
+
+function _encode_body_if_set() {
+	$hasBody = _wrcall(array('has_resp_body'));
+	if ($hasBody === true) {
+		$body = _wrcall(array('resp_body'));
+		_wrcall(array('set_resp_body', _encode_body($body)));
+		return true;
+	}
+	else {
+		return false;
+	}
+}
+
+function _encode_body($body) {
+	$charset = _wrcall(array('get_metadata', 'chosen-charset'));
+	// TODO figure out how to port this thing to php
+
+}
+
+function _make_encoder_stream($encoder, $charSetter, $body) {
+	// TODO figure out how to port this thing to php
+}
+
+function _make_size_encoder_stream($encoder, $charSetter, $callback) {
+	// TODO figure out how to port this thing to php
+}
+
+function _choose_encoding($acceptEncodingHeader) {
+	// TODO figure out how to port this thing to php
+}
+
+function _choose_charset($acceptCharsetHeader) {
+	// TODO figure out how to port this thing to php
+}
+
+function _variances() {
+	// TODO figure out how to port this thing to php
+}
