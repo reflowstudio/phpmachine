@@ -7,7 +7,7 @@ require dirname(__FILE__).'/src/phpmachine_dispatcher.php';
 
 function new_request($host, $port, $method, $scheme, $rawPath, $version, $headers) {
 
-	return phpmachine_request\new(array(
+	return phpmachine_request\new_req(array(
 			'host' => $host,
 			'port' => $port,
 			'scheme' => $scheme,  // not sure if we even need this
