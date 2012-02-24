@@ -347,15 +347,266 @@ function _decision_v3h10() {
 
 // I-UM-S is valid date?
 function _decision_v3h11() {
-	$IUMSDate = get_header_val("if-unmodified-since");
+	$IUMSDate = _get_header_val("if-unmodified-since");
 	return _decision_test(phpmachine_util\convert_request_date($IUMSDate), 'bad_date', 'v3i12', 'v3h12');
 }
 
 // Last-Modified > I-UM-S?
 function _decision_v3h12() {
-	$requestDate = get_header_val("if-unmodified-since");
+	$requestDate = _get_header_val("if-unmodified-since");
 	$reqPhpDate = phpmachine_util\convert_request_date($requestDate);
 	$resPhpDate = _resource_call('last_modified');
 	return _decision_test($resPhpDate > $reqPhpDate, true, 412, 'v3i12');
+}
+
+// Moved permanently? (apply PUT to different URI)
+function _decision_v3i4() {
+	$moved = _resource_call('moved_permanently');
+	if ($moved === false) {
+		return _decision('v3p3');
+	}
+	elseif (is_array($moved)) {
+		if ($moved[0] === true) {
+			_wrcall(array('set_resp_header', 'Location', $moved[1]));
+			return _respond(301);
+		}
+		elseif ($moved[0] == 'error') {
+			return _error_response($moved[1]);
+		}
+		else {
+			return _respond($moved[1]);
+		}
+	}
+}
+
+// PUT?
+function _decision_v3i7() {
+	return _decision_test(_method(), 'PUT', 'v3i4', 'v3k7');
+}
+
+// If-None-Match exists?
+function _decision_v3i12() {
+	return _decision_test(_get_header_val('if-none-match'), null, 'v3l13', 'v3i13');
+}
+
+// If-None-Match: * exists?
+function _decision_v3i13() {
+	return _decision_test(_get_header_val('if-none-match'), '*', 'v3j18', 'v3k13');
+}
+
+// GET or HEAD?
+function _decision_v3j18() {
+	return _decision_test(in_array(_method(), array('GET', 'HEAD')), true, 304, 412);
+}
+
+// Moved permanently?
+function _decision_v3k5() {
+	$moved = _resource_call('moved_permanently');
+	if ($moved === false) {
+		return _decision('v3l5');
+	}
+	elseif (is_array($moved)) {
+		if ($moved[0] === true) {
+			_wrcall(array('set_resp_header', 'Location', $moved[1]));
+			return _respond(301);
+		}
+		elseif ($moved[0] == 'error') {
+			return _error_response($moved[1]);
+		}
+		else {
+			return _respond($moved[1]);
+		}
+	}
+}
+
+// Previously existed?
+function _decision_v3k7() {
+	return _decision_test(_resource_call('previously_existed'), true, 'v3k5', 'v3l7');
+}
+
+// Etag in if-none-match?
+function _decision_v3k13() {
+	$etags = phpmachine_util\split_quoted_strings(_get_header_val('if-none-match'));
+	return _decision_test(_resource_call('generate_etag'), 
+							function($etag) use ($etags) { return in_array($etag, $etags); }, 
+							'v3j18', 
+							'v3l13');
+}
+
+// Moved temporarily?
+function _decision_v3l5() {
+	$moved = _resource_call('moved_temporarily');
+	if ($moved === false) {
+		return _decision('v3m5');
+	}
+	elseif (is_array($moved)) {
+		if ($moved[0] === true) {
+			_wrcall(array('set_resp_header', 'Location', $moved[1]));
+			return _respond(307);
+		}
+		elseif ($moved[0] == 'error') {
+			return _error_response($moved[1]);
+		}
+		else {
+			return _respond($moved[1]);
+		}
+	}
+}
+
+// POST?
+function _decision_v3l7() {
+	return _decision_test(_method(), 'POST', 'v3m7', 404);
+}
+
+// IMS exists?
+function _decision_v3l13() {
+	return _decision_test(_get_header_val('if-modified-since'), null, 'v3m16', 'v3l14');
+}
+
+// IMS is valid date?
+function _decision_v3l14() {
+	$IMSDate = _get_header_val("if-unmodified-since");
+	return _decision_test(phpmachine_util\convert_request_date($IMSDate), 'bad_date', 'v3m16', 'v3l15');
+}
+
+// IMS > Now?
+function _decision_v3l15() {
+	$nowDateTime = gmdate("Y-m-d\TH:i:s\Z");
+	$requestDate = _get_header_val("if-modified-since");
+	$reqPhpDate = phpmachine_util\convert_request_date($requestDate);
+	return _decision_test($reqPhpDate > $nowDateTime, true, 'v3m16', 'v3l17');
+}
+
+// Last-Modified > IMS?
+function _decision_v3l17() {
+	$requestDate = _get_header_val("if-modified-since");
+	$reqPhpDate = phpmachine_util\convert_request_date($requestDate);
+	$resPhpDate = _resource_call('last_modified');
+	return _decision_test($resPhpDate === null || $resPhpDate > $reqPhpDate, 
+							true, 'v3m16', 304);
+}
+
+// POST?
+function _decision_v3m5() {
+	return _decision_test(_method(), 'POST', 'v3n5', 410);
+}
+
+// Server allows POST to missing resource?
+function _decision_v3m7() {
+	return _decision_test(_resource_call('allow_missing_post'), true, 'v3n11', 404);
+}
+
+// DELETE?
+function _decision_v3m16() {
+	return _decision_test(_method(), 'DELETE', 'v3m20', 'v3n16');
+}
+
+// DELETE enacted immediately?
+// Also where DELETE is forced.
+function _decision_v3m20() {
+	return _decision_test(_resource_call('delete_resource'), true, 'v3m20b', 500);
+}
+function _decision_v3m20b() {
+	return _decision_test(_resource_call('delete_completed'), true, 'v3o20', 202);
+}
+
+// Server allows POST to missing resource?
+function _decision_v3n5() {
+	return _decision_test(_resource_call('allow_missing_post'), true, 'v3n11', 410);
+}
+
+// TODO
+// Redirect?
+function _decision_v3n11() {
+	$postIsCreate = _resource_call('post_is_create');
+	if (postIsCreate === true) {
+		
+	}
+}
+
+// POST?
+function _decision_v3n16() {
+	return _decision_test(_method(), 'POST', 'v3n11', 'v3o16');
+}
+
+// Conflict?
+function _decision_v3o14() {
+	$isConflict = _resource_call('is_conflict');
+	if ($isConflict === true) {
+		return _respond(409);
+	}
+	else {
+		$response = _accept_helper();
+		if ($response[0] == 'respond') {
+			return _respond($response[1]);
+		}
+		elseif ($response[0] == 'halt') {
+			return _respond($response[1]);
+		}
+		elseif ($response[0] == 'error') {
+			return _error_response($response);
+		}
+		else {
+			return _decision('v3p11');
+		}
+	}
+}
+
+// PUT?
+function _decision_v3o16() {
+	return _decision_test(_method(), 'PUT', 'v3o14', 'v3o18');
+}
+
+// TODO
+// Multiple representations?
+// (also where body generation for GET and HEAD is done)
+function _decision_v3o18() {
+	$method = _method();
+	$buildBody = ($method == 'GET' || $method == 'HEAD');
+
+
+}
+function _decision_v3o18b() {
+	return _decision_test(_resource_call('multiple_choices'), true, 300, 200);
+}
+
+// Response includes an entity?
+function _decision_v3o20() {
+	return _decision_test(_wrcall(array('has_resp_body')), true, 'v3o18', 204);
+}
+
+// Conflict?
+function _decision_v3p3() {
+	$isConflict = _resource_call('is_conflict');
+	if ($isConflict == true) {
+		return _respond(409);
+	}
+	else {
+		$response = _accept_helper();
+		if ($response[0] == 'respond') {
+			return _respond($response[1]);
+		}
+		elseif ($response[0] == 'halt') {
+			return _respond($response[1]);
+		}
+		elseif ($response[0] == 'error') {
+			return _error_response($response);
+		}
+		else {
+			return _decision('v3p11');
+		}
+	}
+}
+
+// New resource?
+// (at this point boils down to "has location header")
+function _decision_v3p11() {
+	$location = _wrcall(array('get_resp_header', 'Location'));
+	if ($location === null) {
+		return _decision('v3o20');
+	}
+	else {
+		return _respond(201);
+	}
 }
 
