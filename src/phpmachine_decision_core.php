@@ -9,31 +9,30 @@ define('CODE_KEY', __NAMESPACE__.'code');
 
 
 function handle_request($resource, $state) {
-	phpmachine_registry\set(RESOURCE_KEY, $resource);
-	phpmachine_registry\set(STATE_KEY, $state);
+	\phpmachine_registry\set(RESOURCE_KEY, $resource);
+	\phpmachine_registry\set(STATE_KEY, $state);
 	try {
 		return _decision('v3b13');
 	}
 	catch(Exception $e) {
-
+		return _error_response($e->getMessage().'\n'.$e->getTraceAsString());
 	}
 }
 
 function _wrcall($x) {
-	$state = phpmachine_registry\get(STATE_KEY);
-	$request = phpmachine_request\new_req($state);
+	$state = \phpmachine_registry\get(STATE_KEY);
+	$request = \phpmachine_request\new_req($state);
 	$requestFun = $request.'\\call';
 	list($response, $newState) = $requestFun($x);
-	phpmachine_registry\set(STATE_KEY, $newState);
+	\phpmachine_registry\set(STATE_KEY, $newState);
 	return $response;
 }
 
 function _resource_call($function) {
-	$resource = phpmachine_registry\get(RESOURCE_KEY);
-	$resourceFun = $resource.'\\do';
-	list($reply, $newResource, $newState) = $resourceFun($function, phpmachine_registry\all());
-	phpmachine_registry\set(RESOURCE_KEY, $newResource);
-	phpmachine_registry\set(STATE_KEY, $newState);
+	$resource = \phpmachine_registry\get(RESOURCE_KEY);
+	$resourceFun = $resource.'\\do_fun';
+	list($reply, $newState) = $resourceFun($function, \phpmachine_registry\get(STATE_KEY));
+	\phpmachine_registry\set(STATE_KEY, $newState);
 	return $reply;
 }
 
@@ -46,9 +45,9 @@ function _method() {
 }
 
 function _decision($id) {
-	phpmachine_registry\set(DECISION_KEY, $id);
-	// log the decision
-	$fun = '_decision_'.$id;
+	\phpmachine_registry\set(DECISION_KEY, $id);
+	_log_decision($id);
+	$fun = '\\'.__NAMESPACE__.'\_decision_'.$id;
 	return $fun();
 }
 
@@ -57,7 +56,7 @@ function _respond($code, $headers = NULL) {
 		_wrcall(array('set_resp_headers', $headers));
 	}
 
-	$resource = phpmachine_registry\get(RESOURCE_KEY);
+	$resource = \phpmachine_registry\get(RESOURCE_KEY);
 	$endTime = time();
 
 	switch ($code) {
@@ -72,7 +71,7 @@ function _respond($code, $headers = NULL) {
 			break;
 	}
 
-	phpmachine_registry\set(CODE_KEY, $code);
+	\phpmachine_registry\set(CODE_KEY, $code);
 	_wrcall(array('set_response_code', $code));
 	_resource_call('finish_response');
 	$rnamespace = _wrcall(array('get_metadata', 'resource_module'));
@@ -116,6 +115,14 @@ function _decision_test($test, $testVal, $trueFlow, $falseFlow) {
 			return _decision_flow($falseFlow, $test);
 		}
 	}
+	else {
+		if ($test==$testVal) {
+			return _decision_flow($trueFlow, $test);
+		}
+		else {
+			return _decision_flow($falseFlow, $test);
+		}
+	}
 }
 
 function _decision_flow($x, $testResult) {
@@ -137,7 +144,7 @@ function do_log($logData) {
 }
 
 function _log_decision($id) {
-	$resource = phpmachine_registry\get(RESOURCE_KEY);
+	$resource = \phpmachine_registry\get(RESOURCE_KEY);
 	$resourceFun = $resource.'\\log_d';
 	return $resourceFun($id);
 }

@@ -10,9 +10,10 @@ defined('APPLICATION_ENV')
 
 // Ensure library/ is on include_path
 set_include_path(implode(PATH_SEPARATOR, array(
-            realpath(APPLICATION_PATH . '/../library'),
+            realpath(realpath(dirname(__FILE__) . '/../../')),
             get_include_path(),
         )));
+
 
 require 'phpmachine/phpmachine.php';
 
