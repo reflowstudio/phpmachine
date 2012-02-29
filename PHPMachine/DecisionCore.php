@@ -577,7 +577,7 @@ class DecisionCore {
 	 * Server allows POST to missing resource?
 	 */
 	protected static function decision_v3m7(DecisionCoreState $state) {
-		return static::decisionTest(static::callResource('allowMissingPost', $rstate), true, 'v3n11', 404, $state);
+		return static::decisionTest(static::callResource('allowMissingPost', $state), true, 'v3n11', 404, $state);
 	}
 
 	/**
@@ -604,7 +604,7 @@ class DecisionCore {
 	 */
 	protected static function decision_v3n11(DecisionCoreState $state) {
 		$postIsCreate = static::callResource('postIsCreate', $state);
-		return 'stop';
+		return static::errorResponse('Not implemented yet', $state, 501);
 	}
 
 	/**

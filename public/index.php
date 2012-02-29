@@ -14,7 +14,17 @@ set_include_path(implode(PATH_SEPARATOR, array(
             get_include_path(),
         )));
 
+require '../PHPMachine.php';
+require '../Tests/PHPMachine/TestResource.php';
 
-require 'phpmachine/phpmachine.php';
+header('Content-Type: text/plain');
 
-phpmachine\http_request();
+$response = new \PHPMachine\Http\Response();
+
+\PHPMachine\DecisionCore::handleRequest('\\Tests\\PHPMachine\\TestResource', new \PHPMachine\Http\Request(), $response);
+
+$timeDif = $response->getMetadataItem('end-time')-$response->getMetadataItem('start-time');
+
+echo "\n\n Total Time: ".$timeDif." seconds\n\n Response:\n\n";
+echo $response;
+
