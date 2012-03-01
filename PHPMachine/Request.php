@@ -247,6 +247,30 @@ abstract class Request {
     }
 
     /**
+     *
+     * @param $host
+     * @return Request
+     */
+    public function setHost($host)
+    {
+        $this->host = $host;
+        return $this;
+    }
+
+    /**
+     * 
+     * @return string
+     */
+    public function getHost()
+    {
+        if ($this->host === null) {
+            $this->host = '127.0.0.1';
+        }
+
+        return $this->host;
+    }
+
+    /**
      * Provide an alternate Parameter Container implementation for server parameters in this object, (this is NOT the
      * primary API for value setting, for that see server())
      *
