@@ -3,10 +3,10 @@
 namespace MyExample;
 
 
-class BasicResource extends \PHPMachine\Resource {
+class RootResource extends \PHPMachine\Resource {
 
 	public static function toHTML(\PHPMachine\Request $request, array &$context){
-		return 'This is a test';
+		return 'Welcome to PHPMachine';
 	}
 
 }

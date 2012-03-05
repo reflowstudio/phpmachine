@@ -13,6 +13,10 @@ class Dispatcher {
 
 	public static function dispatch($hostAsString, $pathAsString, array $dispatchList, Request $requestData) {
 		$path = explode(SEPARATOR, $pathAsString);
+		// Fix for PHP  it takes the /.. amd adds a space in the first position. We don't need it because all paths will start with /
+		if ($path[0] == '') {
+			array_shift($path);
+		}
 
 		$extraDepth = ($pathAsString[strlen($pathAsString)-1] == SEPARATOR)?1:0;
 
