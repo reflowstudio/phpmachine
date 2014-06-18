@@ -6,106 +6,106 @@ class DecisionCoreTest extends \PHPUnit_Framework_TestCase {
 
 	public function testNotAvailable() {
 		$response = \PHPMachine\DecisionCore::handleRequest('\\Tests\\PHPMachine\\TestResourceUnavailable', new Request(), new Response());
-		$this->assertEquals(503, $response->getStatusCode());
+		$this->assertEquals(503, $response->status_code());
 	}
 
 	public function testExists() {
 		$response = \PHPMachine\DecisionCore::handleRequest('\\Tests\\PHPMachine\\TestResourceExists', new Request(), new Response());
-		$this->assertEquals(404, $response->getStatusCode());
+		$this->assertEquals(404, $response->status_code());
 	}
 
 	public function testAuthorized() {
 		$response = \PHPMachine\DecisionCore::handleRequest('\\Tests\\PHPMachine\\TestAuthorized', new Request(), new Response());
-		$this->assertEquals(401, $response->getStatusCode());
+		$this->assertEquals(401, $response->status_code());
 	}
 
 	public function testForbidden() {
 		$response = \PHPMachine\DecisionCore::handleRequest('\\Tests\\PHPMachine\\TestForbidden', new Request(), new Response());
-		$this->assertEquals(403, $response->getStatusCode());
+		$this->assertEquals(403, $response->status_code());
 	}
 
 	public function testMalformedRequest() {
 		$response = \PHPMachine\DecisionCore::handleRequest('\\Tests\\PHPMachine\\TestMalformedRequest', new Request(), new Response());
-		$this->assertEquals(400, $response->getStatusCode());
+		$this->assertEquals(400, $response->status_code());
 	}
 
 	public function testURITooLong() {
 		$response = \PHPMachine\DecisionCore::handleRequest('\\Tests\\PHPMachine\\TestURITooLong', new Request(), new Response());
-		$this->assertEquals(414, $response->getStatusCode());
+		$this->assertEquals(414, $response->status_code());
 	}
 
 	public function testKnownContentType() {
 		$response = \PHPMachine\DecisionCore::handleRequest('\\Tests\\PHPMachine\\TestKnownContentType', new Request(), new Response());
-		$this->assertEquals(415, $response->getStatusCode());
+		$this->assertEquals(415, $response->status_code());
 	}
 
 	public function testValidContentHeaders() {
 		$response = \PHPMachine\DecisionCore::handleRequest('\\Tests\\PHPMachine\\TestValidContentHeaders', new Request(), new Response());
-		$this->assertEquals(501, $response->getStatusCode());
+		$this->assertEquals(501, $response->status_code());
 	}
 
 	public function testValidEntityLength() {
 		$response = \PHPMachine\DecisionCore::handleRequest('\\Tests\\PHPMachine\\TestValidEntityLength', new Request(), new Response());
-		$this->assertEquals(413, $response->getStatusCode());
+		$this->assertEquals(413, $response->status_code());
 	}
 
 	public function testOptions() {
 		$response = \PHPMachine\DecisionCore::handleRequest('\\Tests\\PHPMachine\\TestOptions', new Request('localhost', 80, 'OPTIONS'), new Response());
-		$this->assertEquals(200, $response->getStatusCode());
-		$this->assertArrayHasKey('X-Testing123', $response->getHeaders());
+		$this->assertEquals(200, $response->status_code());
+		$this->assertArrayHasKey('X-Testing123', $response->headers());
 	}
 
 	public function testAllowedMethods() {
 		$response = \PHPMachine\DecisionCore::handleRequest('\\Tests\\PHPMachine\\TestResource', new Request('localhost', 80, 'WEIRD'), new Response());
-		$this->assertEquals(405, $response->getStatusCode());
+		$this->assertEquals(405, $response->status_code());
 	}
 
 	public function testDeleteResource() {
 		$response = \PHPMachine\DecisionCore::handleRequest('\\Tests\\PHPMachine\\TestDeleteResource', new Request('localhost', 80, 'DELETE'), new Response());
-		$this->assertEquals(204, $response->getStatusCode());
+		$this->assertEquals(204, $response->status_code());
 	}
 
 	public function testDeleteResourceNoGuarentee() {
 		$response = \PHPMachine\DecisionCore::handleRequest('\\Tests\\PHPMachine\\TestDeleteResourceNoGuarentee', new Request('localhost', 80, 'DELETE'), new Response());
-		$this->assertEquals(202, $response->getStatusCode());
+		$this->assertEquals(202, $response->status_code());
 	}
 
 	public function testPostIsCreate() {
 		$response = \PHPMachine\DecisionCore::handleRequest('\\Tests\\PHPMachine\\TestPostIsCreate', new Request('localhost', 80, 'POST'), new Response());
-		$this->assertEquals(201, $response->getStatusCode(), $response->getBody());
+		$this->assertEquals(201, $response->status_code(), $response->body());
 	}
 
 	public function testPostIsCreateWithOutPath() {
 		$response = \PHPMachine\DecisionCore::handleRequest('\\Tests\\PHPMachine\\TestPostIsCreateWithOutPath', new Request('localhost', 80, 'POST'), new Response());
-		$this->assertEquals(500, $response->getStatusCode(), $response->getBody());
+		$this->assertEquals(500, $response->status_code(), $response->body());
 	}
 
 	public function testPost() {
 		$response = \PHPMachine\DecisionCore::handleRequest('\\Tests\\PHPMachine\\TestPost', new Request('localhost', 80, 'POST'), new Response());
-		$this->assertEquals(204, $response->getStatusCode(), $response->getBody());
+		$this->assertEquals(204, $response->status_code(), $response->body());
 	}
 
 	public function testContentTypesProvided() {
 		$response = \PHPMachine\DecisionCore::handleRequest('\\Tests\\PHPMachine\\TestContentTypesProvided', new Request(), new Response());
-		$this->assertEquals(200, $response->getStatusCode(), $response->getBody());
-		$this->assertEquals('I\'m cool!', $response->getBody());
+		$this->assertEquals(200, $response->status_code(), $response->body());
+		$this->assertEquals('I\'m cool!', $response->body());
 	}
 
 	public function testContentTypesProvidedFail() {
-		$response = \PHPMachine\DecisionCore::handleRequest('\\Tests\\PHPMachine\\TestContentTypesProvided', 
-			new Request('localhost', 80, 'GET', 'http', '/', array(), array('Accept-Type'=>'text/html')), 
+		$response = \PHPMachine\DecisionCore::handleRequest('\\Tests\\PHPMachine\\TestContentTypesProvided',
+			new Request('localhost', 80, 'GET', 'http', '/', array(), array('Accept-Type'=>'text/html')),
 			new Response());
-		$this->assertEquals(406, $response->getStatusCode(), $response->getBody());
+		$this->assertEquals(406, $response->status_code(), $response->body());
 	}
 
 	public function testConflict() {
 		$response = \PHPMachine\DecisionCore::handleRequest('\\Tests\\PHPMachine\\TestConflict', new Request('localhost', 80, 'POST'), new Response());
-		$this->assertEquals(409, $response->getStatusCode(), $response->getBody());
+		$this->assertEquals(409, $response->status_code(), $response->body());
 	}
 
 	public function testMulitpleChoices() {
 		$response = \PHPMachine\DecisionCore::handleRequest('\\Tests\\PHPMachine\\TestMulitpleChoices', new Request(), new Response());
-		$this->assertEquals(300, $response->getStatusCode(), $response->getBody());
+		$this->assertEquals(300, $response->status_code(), $response->body());
 	}
 
     // TODO test caching stuff

@@ -1,7 +1,7 @@
 <?php
 /**
  * PHPMachine DecisionCore
- * 
+ *
  * @author Cameron Bytheway <cameron@nujii.com>
  */
 namespace PHPMachine;
@@ -47,7 +47,7 @@ class DecisionCore {
 		catch(\Exception $e) {
 			return $e;
 		}
-		
+
 	}
 
 	protected static function decision($decision, DecisionCoreState $state) {
@@ -62,7 +62,7 @@ class DecisionCore {
 		$response = $state->response;
 
 		if ($code == 404) {
-			$resonse = ErrorHandler::handleError($code, $request, 'Resource was not found');
+			$response = ErrorHandler::handleError($code, $request, 'Resource was not found');
 		}
 		elseif ($code == 304) {
 			// TODO
@@ -71,7 +71,7 @@ class DecisionCore {
 			// Get Expires
 		}
 
-		$response->setStatusCode($code);
+		$response->set_status_code($code);
 		static::callResource('finishRequest', $state);
 
 		$response->setMetadataItem('end-time', microtime(true));
@@ -80,7 +80,7 @@ class DecisionCore {
 	}
 
 	protected static function errorResponse($message, DecisionCoreState $state, $code=500) {
-		$state->response->setBody($message);
+		$state->response->write($message);
 		return static::respond($code, $state);
 	}
 
@@ -143,7 +143,7 @@ class DecisionCore {
 	 */
 	protected static function decision_v3b12(DecisionCoreState $state) {
 		$methods = static::callResource('allowedMethods', $state);
-		return static::decisionTest(in_array($state->request->getMethod(), $methods), true, 'v3b11', 405, $state);
+		return static::decisionTest(in_array($state->request->method(), $methods), true, 'v3b11', 405, $state);
 	}
 
 	/**
@@ -158,11 +158,11 @@ class DecisionCore {
 	 */
 	protected static function decision_v3b10(DecisionCoreState $state) {
 		$methods = static::callResource('allowedMethods', $state);
-		if (in_array($state->request->getMethod(), $methods)) {
+		if (in_array($state->request->method(), $methods)) {
 			return 'v3b9';
 		}
 		else {
-			$state->response->setHeader('Allow', implode(', ', $method));
+			$state->response->add_header('Allow', implode(', ', $method));
 			return static::respond(405, $state);
 		}
 	}
@@ -186,7 +186,7 @@ class DecisionCore {
 			return static::errorResponse($isAuthorized->getMessage(), $state);
 		}
 		else {
-			$state->response->setHeader('WWW-Authenticate', $isAuthorized);
+			$state->response->add_header('WWW-Authenticate', $isAuthorized);
 			return static::respond(401, $state);
 		}
 	}
@@ -223,10 +223,10 @@ class DecisionCore {
 	 * OPTIONS?
 	 */
 	protected static function decision_v3b3(DecisionCoreState $state) {
-		$method = $state->request->getMethod();
+		$method = $state->request->method();
 		if ($method == 'OPTIONS') {
 			$headers = static::callResource('options', $state);
-			$state->response->setHeaders($headers);
+			$state->response->add_headers($headers);
 			return static::respond(200, $state);
 		}
 		else {
@@ -238,7 +238,7 @@ class DecisionCore {
 	 * Accept exists?
 	 */
 	protected static function decision_v3c3(DecisionCoreState $state) {
-		$accept = $state->request->getHeader('accept');
+		$accept = $state->request->header('accept');
 		if ($accept === null) {
 			$types = static::callResource('contentTypesProvided', $state);
 			$keys = array_keys($types);
@@ -255,7 +255,7 @@ class DecisionCore {
 	 */
 	protected static function decision_v3c4(DecisionCoreState $state) {
 		$types = static::callResource('contentTypesProvided', $state);
-		$accept = $state->request->getHeader('accept');
+		$accept = $state->request->header('accept');
 
 		// choose media type
 		$type = null;
@@ -273,7 +273,7 @@ class DecisionCore {
 	 * Accept-Language exists?
 	 */
 	protected static function decision_v3d4(DecisionCoreState $state) {
-		return static::decisionTest($state->request->getHeader('accept-language'), null, 'v3e5', 'v3d5', $state);
+		return static::decisionTest($state->request->header('accept-language'), null, 'v3e5', 'v3d5', $state);
 	}
 
 	/**
@@ -287,7 +287,7 @@ class DecisionCore {
 	 * Accept-Charset exists?
 	 */
 	protected static function decision_v3e5(DecisionCoreState $state) {
-		$charset = $state->request->getHeader('accept-charset');
+		$charset = $state->request->header('accept-charset');
 		if ($charset === null) {
 			// TODO choose a charset
 			$charset = true;
@@ -302,8 +302,8 @@ class DecisionCore {
 	 * Accept-Encoding exists?
 	 */
 	protected static function decision_v3f6(DecisionCoreState $state) {
-		$contentType = $state->response->getMetadataItem('content-type');
-		$charset = $state->response->getMetadataItem('chosen-charset');
+		$contentType = $state->response->metadata('content-type');
+		$charset = $state->response->metadata('chosen-charset');
 
 		if ($charset === null) {
 			$charset = '';
@@ -311,16 +311,16 @@ class DecisionCore {
 		else {
 			$charset = '; charset=' . $charset;
 		}
-		
-		$state->response->setHeader('Content-Type', $charset);
 
-		$encoding = $state->request->getHeader('accept-encoding');
+		$state->response->add_header('content-type', $charset);
+
+		$encoding = $state->request->header('accept-encoding');
 		if ($encoding === null) {
 			// TODO choose an encoding
 			return static::decisionTest('identity;q=1.0,*;q=0.5', false, 406, 'v3g7', $state);
 		}
 		else {
-			$state->response->setHeader('content-type', $type);
+			$state->response->add_header('content-type', $type);
 			return 'v3f7';
 		}
 	}
@@ -330,7 +330,7 @@ class DecisionCore {
 	 */
 	protected static function decision_v3f7(DecisionCoreState $state) {
 		// TODO choose encoding
-		$encoding = $state->request->getHeader('accept-encoding');
+		$encoding = $state->request->header('accept-encoding');
 		return static::decisionTest($encoding, false, 406, 'v3g7', $state);
 	}
 
@@ -350,24 +350,24 @@ class DecisionCore {
 	 * If-Match exists?
 	 */
 	protected static function decision_v3g8(DecisionCoreState $state) {
-		return static::decisionTest($state->request->getHeader('if-match'), null, 'v3h10', 'v3g9', $state);
+		return static::decisionTest($state->request->header('if-match'), null, 'v3h10', 'v3g9', $state);
 	}
 
 	/**
 	 * If-Match: * exists?
 	 */
 	protected static function decision_v3g9(DecisionCoreState $state) {
-		return static::decisionTest($state->request->getHeader('if-match'), '*', 'v3h10', 'v3g11', $state);
+		return static::decisionTest($state->request->header('if-match'), '*', 'v3h10', 'v3g11', $state);
 	}
 
 	/**
 	 * ETag in If-Match
 	 */
 	protected static function decision_v3g11(DecisionCoreState $state) {
-		$etags = $request->getHeader('if-match');
+		$etags = $request->header('if-match');
 		// TODO parse etags
 		return static::decisionTest(
-				static::callResource('generateEtag', $state), 
+				static::callResource('generateEtag', $state),
 					function($etag) use ($etags) { return in_array($etag, $etags); },
 					'v3h10', 412, $state);
 	}
@@ -376,21 +376,21 @@ class DecisionCore {
 	 * If-Match exists?
 	 */
 	protected static function decision_v3h7(DecisionCoreState $state) {
-		return static::decisionTest($state->request->getHeader('if-match'), null, 'v3i7', 412, $state);
+		return static::decisionTest($state->request->header('if-match'), null, 'v3i7', 412, $state);
 	}
 
 	/**
 	 * If-unmodified-since exists?
 	 */
 	protected static function decision_v3h10(DecisionCoreState $state) {
-		return static::decisionTest($state->request->getHeader('if-unmodified-since'), null, 'v3i12', 'v3i11', $state);
+		return static::decisionTest($state->request->header('if-unmodified-since'), null, 'v3i12', 'v3i11', $state);
 	}
 
 	/**
 	 * I-UM-S is valid date?
 	 */
 	protected static function decision_v3h11(DecisionCoreState $state) {
-		$date = $state->request->getHeader('if-unmodified-since');
+		$date = $state->request->header('if-unmodified-since');
 		// Check date format
 		$result = true;
 		return static::decisionTest($result, false, 'v3i12', 'v3h12', $state);
@@ -400,7 +400,7 @@ class DecisionCore {
 	 * Last-Modified > I-UM-S?
 	 */
 	protected static function decision_v3h12(DecisionCoreState $state) {
-		$date = $state->request->getHeader('if-unmodified-since');
+		$date = $state->request->header('if-unmodified-since');
 		// Convert
 		$reqPhpDate = 0;
 		$resPhpDate = static::callResource('lastModified', $state);
@@ -424,7 +424,7 @@ class DecisionCore {
 			}
 		}
 		else {
-			$state->response->setHeader('Location', $moved);
+			$state->response->add_header('Location', $moved);
 			return static::respond(301, $state);
 		}
 	}
@@ -433,28 +433,28 @@ class DecisionCore {
 	 * PUT?
 	 */
 	protected static function decision_v3i7(DecisionCoreState $state) {
-		return static::decisionTest($state->request->getMethod(), 'PUT', 'v3i4', 'v3k7', $state);
+		return static::decisionTest($state->request->method(), 'PUT', 'v3i4', 'v3k7', $state);
 	}
 
 	/**
 	 * If-None-Match exists?
 	 */
 	protected static function decision_v3i12(DecisionCoreState $state) {
-		return static::decisionTest($state->request->getHeader('if-none-match'), null, 'v3l13', 'v3i13', $state);
+		return static::decisionTest($state->request->header('if-none-match'), null, 'v3l13', 'v3i13', $state);
 	}
 
 	/**
 	 * If-None-Match: * exists?
 	 */
 	protected static function decision_v3i13(DecisionCoreState $state) {
-		return static::decisionTest($state->request->getHeader('if-none-match'), '*', 'v3j18', 'v3k13', $state);
+		return static::decisionTest($state->request->header('if-none-match'), '*', 'v3j18', 'v3k13', $state);
 	}
 
 	/**
 	 * GET or HEAD?
 	 */
 	protected static function decision_v3j18(DecisionCoreState $state) {
-		return static::decisionTest(in_array($state->request->getMethod(), array('GET', 'HEAD')), true, 304, 412, $state);
+		return static::decisionTest(in_array($state->request->method(), array('GET', 'HEAD')), true, 304, 412, $state);
 	}
 
 	/**
@@ -474,7 +474,7 @@ class DecisionCore {
 			}
 		}
 		else {
-			$state->response->setHeader('Location', $moved);
+			$state->response->add_header('Location', $moved);
 			return static::respond(301, $state);
 		}
 	}
@@ -490,10 +490,10 @@ class DecisionCore {
 	 * Etag in if-none-match?
 	 */
 	protected static function decision_v3k13(DecisionCoreState $state) {
-		$etags = $state->request->getHeader('if-none-match');
+		$etags = $state->request->header('if-none-match');
 		// TODO parse etags
 		return static::decisionTest(
-				static::callResource('genereateEtag', $state), 
+				static::callResource('genereateEtag', $state),
 					function($etag) use ($etags) { return in_array($etag, $etags); },
 					'v3j18', 'v3l13', $state);
 	}
@@ -515,7 +515,7 @@ class DecisionCore {
 			}
 		}
 		else {
-			$state->response->setHeader('Location', $moved);
+			$state->response->add_header('Location', $moved);
 			return static::respond(307, $state);
 		}
 	}
@@ -524,21 +524,21 @@ class DecisionCore {
 	 * POST?
 	 */
 	protected static function decision_v3l7(DecisionCoreState $state) {
-		return static::decisionTest($state->request->getMethod(), 'POST', 'v3m7', 404, $state);
+		return static::decisionTest($state->request->method(), 'POST', 'v3m7', 404, $state);
 	}
 
 	/**
 	 * IMS exists?
 	 */
 	protected static function decision_v3l13(DecisionCoreState $state) {
-		return static::decisionTest($state->request->getHeader('if-modified-since'), null, 'v3m16', 'v3l14', $state);
+		return static::decisionTest($state->request->header('if-modified-since'), null, 'v3m16', 'v3l14', $state);
 	}
 
 	/**
 	 * IMS is valid date?
 	 */
 	protected static function decision_v3l14(DecisionCoreState $state) {
-		$date = $state->request->getHeader('if-unmodified-since');
+		$date = $state->request->header('if-unmodified-since');
 		// Check date format
 		$result = true;
 		return static::decisionTest($result, false, 'v3m16', 'v3l15', $state);
@@ -549,7 +549,7 @@ class DecisionCore {
 	 */
 	protected static function decision_v3h15(DecisionCoreState $state) {
 		$nowDateTime = gmdate("Y-m-d\TH:i:s\Z");
-		$requestDate = $state->request->getHeader("if-modified-since");
+		$requestDate = $state->request->header("if-modified-since");
 		// Convert date
 		$reqPhpDate = 0;
 		return static::decisionTest($reqPhpDate > $nowDateTime, true, 'v3m16', 'v3l17', $state);
@@ -559,7 +559,7 @@ class DecisionCore {
 	 * Last-Modified > IMS?
 	 */
 	protected static function decision_v3l17(DecisionCoreState $state) {
-		$date = $state->request->getHeader('if-unmodified-since');
+		$date = $state->request->header('if-unmodified-since');
 		// Convert
 		$reqPhpDate = 0;
 		$resPhpDate = static::callResource('lastModified', $state);
@@ -570,7 +570,7 @@ class DecisionCore {
 	 * POST?
 	 */
 	protected static function decision_v3m5(DecisionCoreState $state) {
-		return static::decisionTest($state->request->getMethod(), 'POST', 'v3n5', 410, $state);
+		return static::decisionTest($state->request->method(), 'POST', 'v3n5', 410, $state);
 	}
 
 	/**
@@ -584,7 +584,7 @@ class DecisionCore {
 	 * DELETE?
 	 */
 	protected static function decision_v3m16(DecisionCoreState $state) {
-		return static::decisionTest($state->request->getMethod(), 'DELETE', 'v3m20', 'v3n16', $state);
+		return static::decisionTest($state->request->method(), 'DELETE', 'v3m20', 'v3n16', $state);
 	}
 
 	/**
@@ -611,7 +611,7 @@ class DecisionCore {
 	 * POST?
 	 */
 	protected static function decision_v3n16(DecisionCoreState $state) {
-		return static::decisionTest($state->request->getMethod(), 'POST', 'v3n11', 'v3o16', $state);
+		return static::decisionTest($state->request->method(), 'POST', 'v3n11', 'v3o16', $state);
 	}
 
 	/**
@@ -634,7 +634,7 @@ class DecisionCore {
 				case 'error':
 					return static::errorResponse($accept[1], $state);
 					break;
-				
+
 				default:
 					return 'v3p11';
 					break;
@@ -646,7 +646,7 @@ class DecisionCore {
 	 * PUT?
 	 */
 	protected static function decision_v3o16(DecisionCoreState $state) {
-		return static::decisionTest($state->request->getMethod(), 'PUT', 'v3o14', 'v3o18', $state);
+		return static::decisionTest($state->request->method(), 'PUT', 'v3o14', 'v3o18', $state);
 	}
 
 	// TODO
@@ -655,7 +655,7 @@ class DecisionCore {
 	 * (also where body generation for GET and HEAD is done)
 	 */
 	protected static function decision_v3o18(DecisionCoreState $state) {
-		$method = $state->request->getMethod();
+		$method = $state->request->method();
 		$buildBody = ($method == 'GET' || $method == 'HEAD');
 
 		$finalBody = null;
@@ -664,23 +664,23 @@ class DecisionCore {
 			$etag = static::callResource('generateEtag', $state);
 			// TODO quoted string
 			if ($etag) {
-				$state->response->setHeader('ETag', $etag);
+				$state->response->add_header('ETag', $etag);
 			}
-			
-			$contentType = $state->response->getMetadataItem('content-type');
+
+			$contentType = $state->response->metadata('content-type');
 
 			$lastModified = static::callResource('lastModified', $state);
 
 			if ($lastModified) {
 				// TODO convert date
-				$state->response->setHeader('Last-Modified', $lastModified);
+				$state->response->add_header('Last-Modified', $lastModified);
 			}
 
 			$expires = static::callResource('expires', $state);
 
 			if ($expires) {
 				// TODO convert date
-				$state->response->setHeader('Expires', $lastModified);
+				$state->response->add_header('Expires', $lastModified);
 			}
 
 			$contentTypesProvided = static::callResource('contentTypesProvided', $state);
@@ -705,7 +705,7 @@ class DecisionCore {
 			}
 		}
 		else {
-			$state->response->setBody(static::encodeBody($finalBody, $state));
+			$state->response->write(static::encodeBody($finalBody, $state));
 			return 'v3o18b';
 		}
 	}
@@ -717,7 +717,7 @@ class DecisionCore {
 	 * Response includes an entity?
 	 */
 	protected static function decision_v3o20(DecisionCoreState $state) {
-		return static::decisionTest($state->response->getBody(), null, 204, 'v3o18', $state);
+		return static::decisionTest($state->response->body(), null, 204, 'v3o18', $state);
 	}
 
 	/**
@@ -740,7 +740,7 @@ class DecisionCore {
 				case 'error':
 					return static::errorResponse($accept[1], $state);
 					break;
-				
+
 				default:
 					return 'v3p11';
 					break;
@@ -758,7 +758,7 @@ class DecisionCore {
 	}
 
 	protected static function encodeBody($body, DecisionCoreState $state) {
-		$charset = $state->response->getMetadataItem('chosen-charset');
+		$charset = $state->response->metadata('chosen-charset');
 		return $body;
 	}
 }

@@ -7,28 +7,28 @@ require dirname(__FILE__).'/PHPMachine/Loader.php';
 \PHPMachine\Loader::autoload();
 
 function http_request($dispatchPath) {
-	
+
 	$request = new \PHPMachine\Http\Request();
 	$response = new \PHPMachine\Http\Response();
 
 	$response = execute_request($request, $response, $dispatchPath);
 
-	foreach ($response->getHeaders() as $key => $value) {
+	foreach ($response->headers() as $key => $value) {
 		header($key . ': ' . $value);
 	}
-	echo $response->getBody();
+	echo $response->body();
 
 }
 
 function execute_request(Request $request, Response $response, $dispatchPath) {
 	$dispatchList = require $dispatchPath;
 
-	$result = Dispatcher::dispatch($request->getHost(), $request->getUri(), $dispatchList, $request);
+	$result = Dispatcher::dispatch($request->getHost(), $request->uri(), $dispatchList, $request);
 
 	if ($result[0]===false) {
-		$response->setStatusCode(400);
+		$response->set_status_code(400);
 		$body = ErrorHandler::handleError(400, $request, 'Resource was not found');
-		$response->setBody($body);
+		$response->write($body);
 		return $response;
 	}
 	else {
