@@ -80,12 +80,6 @@ interface Response {
 	public function add_header($key, $value);
 
 	/**
-		Returns an associative array of the key, value pairs representing
-		the response HTTP headers.
-   */
-	public function headers();
-
-	/**
   	Adds the $key, $value pair as metadata for the response.
    */
 	public function add_metadata($key, $value);
@@ -111,12 +105,17 @@ interface Response {
 	public function set_status_code($code);
 
 	/**
-		Returns the body text of the response.
+		Returns true if the response body is blank.
    */
-	public function body();
+	public function is_blank();
 
 	/**
   	Writes $body to the body of the response.
    */
 	public function write($body);
+
+	/**
+		Serves the response to the client.
+	 */
+	public function serve();
 }

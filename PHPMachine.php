@@ -7,23 +7,16 @@ require dirname(__FILE__).'/PHPMachine/Loader.php';
 \PHPMachine\Loader::autoload();
 
 function http_request($dispatchPath) {
-
 	$request = new \PHPMachine\Http\Request();
 	$response = new \PHPMachine\Http\Response();
-
 	$response = execute_request($request, $response, $dispatchPath);
-
-	foreach ($response->headers() as $key => $value) {
-		header($key . ': ' . $value);
-	}
-	echo $response->body();
-
+	$response->serve();
 }
 
 function execute_request(Request $request, Response $response, $dispatchPath) {
 	$dispatchList = require $dispatchPath;
 
-	$result = Dispatcher::dispatch($request->getHost(), $request->uri(), $dispatchList, $request);
+	$result = Dispatcher::dispatch($dispatchList, $request);
 
 	if ($result[0]===false) {
 		$response->set_status_code(400);

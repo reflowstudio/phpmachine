@@ -1,7 +1,7 @@
 <?php
 /**
  * PHPMachine Dispatcher
- * 
+ *
  * @author Cameron Bytheway <cameron@nujii.com>
  */
 namespace PHPMachine;
@@ -11,22 +11,23 @@ define('MATCH_ALL', '*');
 
 class Dispatcher {
 
-	public static function dispatch($hostAsString, $pathAsString, array $dispatchList, Request $requestData) {
-		$path = explode(SEPARATOR, $pathAsString);
+	public static function dispatch(array $dispatchList, Request $request) {
+		$uri = $request->uri();
+		$path = explode(SEPARATOR, $uri);
 		// Fix for PHP  it takes the /.. amd adds a space in the first position. We don't need it because all paths will start with /
 		if ($path[0] == '') {
 			array_shift($path);
 		}
 
-		$extraDepth = ($pathAsString[strlen($pathAsString)-1] == SEPARATOR)?1:0;
+		$extraDepth = ($uri[strlen($uri)-1] == SEPARATOR) ? 1 : 0;
 
-		list($host, $port) = static::splitHostPort($hostAsString);
-		return static::tryHostBinding($dispatchList, 
-									array_reverse($host), 
-									$port, 
-									$path, 
-									$extraDepth, 
-									$requestData);
+		list($host, $port) = static::splitHostPort($request->host());
+		return static::tryHostBinding($dispatchList,
+									array_reverse($host),
+									$port,
+									$path,
+									$extraDepth,
+									$request);
 	}
 
 	protected static function splitHostPort($hostAsString) {
@@ -150,15 +151,15 @@ class Dispatcher {
 			return false;
 		}
 		elseif (count($tokens) && strpos($tokens[0], '@') !== false) {
-			return static::bind(array_slice($tokens, 1), 
+			return static::bind(array_slice($tokens, 1),
 							array_slice($matches, 1),
-							array_merge(array(substr($tokens[0], 1)=>$matches[0]), $bindings), 
+							array_merge(array(substr($tokens[0], 1)=>$matches[0]), $bindings),
 							$depth+1);
 		}
 		elseif (count($tokens) && $tokens[0] == $matches[0]) {
-			return static::bind(array_slice($tokens, 1), 
-							array_slice($matches, 1), 
-							$bindings, 
+			return static::bind(array_slice($tokens, 1),
+							array_slice($matches, 1),
+							$bindings,
 							$depth+1);
 		}
 		elseif (count($matches) == 1 && $matches[0] == '') {

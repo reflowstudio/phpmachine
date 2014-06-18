@@ -717,7 +717,7 @@ class DecisionCore {
 	 * Response includes an entity?
 	 */
 	protected static function decision_v3o20(DecisionCoreState $state) {
-		return static::decisionTest($state->response->body(), null, 204, 'v3o18', $state);
+		return static::decisionTest($state->response->is_blank(), true, 204, 'v3o18', $state);
 	}
 
 	/**
