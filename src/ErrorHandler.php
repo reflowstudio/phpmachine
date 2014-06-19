@@ -12,7 +12,7 @@ class ErrorHandler {
 			return $handler($code, $request, $reason);
 		}
 		else {
-			return $reason;
+			return "{$code} {$reason}";
 		}
 	}
 
