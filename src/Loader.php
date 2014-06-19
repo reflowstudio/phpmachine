@@ -4,7 +4,6 @@ namespace PHPMachine;
 
 define('PHPMACHINE_DIR', dirname(__FILE__));
 
-
 class Loader {
 
 	public static function autoload($namespace=__NAMESPACE__, $basepath=PHPMACHINE_DIR, $includeFirstNamespace=false) {

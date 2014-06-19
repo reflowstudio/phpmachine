@@ -6,6 +6,8 @@
  */
 namespace PHPMachine;
 
+require_once 'Logger.php';
+
 class DecisionCore {
 
 	/**
@@ -18,7 +20,7 @@ class DecisionCore {
 	public static function handleRequest($resource, Request $request, Response $response) {
 		try {
 			// Temporary
-			$response->setMetadataItem('start-time', microtime(true));
+			$response->add_metadata('start-time', microtime(true));
 
 			$context = $resource::init($request);
 
@@ -74,7 +76,7 @@ class DecisionCore {
 		$response->set_status_code($code);
 		static::callResource('finishRequest', $state);
 
-		$response->setMetadataItem('end-time', microtime(true));
+		$response->add_metadata('end-time', microtime(true));
 
 		return 'stop';
 	}
@@ -242,7 +244,7 @@ class DecisionCore {
 		if ($accept === null) {
 			$types = static::callResource('contentTypesProvided', $state);
 			$keys = array_keys($types);
-			$state->response->setMetadataItem('content-type', $keys[0]);
+			$state->response->add_metadata('content-type', $keys[0]);
 			return 'v3d4';
 		}
 		else {
@@ -264,7 +266,7 @@ class DecisionCore {
 			return static::respond(406, $state);
 		}
 		else {
-			$state->response->setMetadataItem('content-type', $type);
+			$state->response->add_metadata('content-type', $type);
 			return 'v3d4';
 		}
 	}
