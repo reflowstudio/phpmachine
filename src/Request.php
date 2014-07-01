@@ -73,6 +73,12 @@ class Request {
 		return $this->abs_path() . $extension;
 	}
 
+	/// Returns the absolute path to the document root.
+	function document_root() { return $_SERVER['DOCUMENT_ROOT']; }
+
+	/// Returns the absolute path to the domain root.
+	function domain_root() { return dirname($_SERVER['DOCUMENT_ROOT']); }
+
 	/// Returns the requested path without the query parameters.
 	function abs_path() { return strtok($_SERVER['REQUEST_URI'], '?'); }
 
