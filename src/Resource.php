@@ -157,8 +157,9 @@ abstract class Resource {
 	/**
 	 * This will be called on a POST request if postIsCreate returns
 	 * true. If this function returns a path, it should be a valid
-	 * URI part following the dispatcher prefix. If it does not return
-	 * a path, it must return null.
+	 * URI part following the dispatcher prefix and the client shall
+	 * redirected to that URI with a 303 See Other. If it does not
+	 * return a path, it must return null.
 	 *
 	 * @return string
 	 */

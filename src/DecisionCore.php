@@ -607,7 +607,7 @@ class DecisionCore {
 	 */
 	protected static function decision_v3n11(DecisionCoreState $state) {
 		$location = static::callResource('createPath', $state);
-		$state->request->add_header('Location', $location);
+		$state->response->add_header('Location', $location);
 		return static::decisionTest($location, null, 'v3p11', 303, $state);
 	}
 
@@ -757,7 +757,7 @@ class DecisionCore {
 	 * (at this point boils down to "has location header")
 	 */
 	protected static function decision_v3p11(DecisionCoreState $state) {
-		$location = $state->resource->getHeader('Location');
+		$location = $state->response->header('Location');
 		return ($location===null)?'v3o20':static::respond(201, $state);
 	}
 

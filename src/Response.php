@@ -87,7 +87,21 @@ class Response {
 
 	/// Adds the $key, $value pair as a HTTP header.
 	function add_header($key, $value) {
-		$this->headers[$key] = $value;
+		if (! is_null($value)) {
+			$this->headers[$key] = $value;
+		}
+	}
+
+	/**
+	  Returns the header value for $key.
+
+		If no header is present with the corresponding $key then null
+		is returned. If no key is specified or a null value is passed as
+		$key then an associative array of all $key, $value header pairs
+		is returned.
+	 */
+	function header($key = null) {
+		return get_in($this->headers, $key);
 	}
 
 	/// Adds the $key, $value pair as metadata for the response.
@@ -105,12 +119,6 @@ class Response {
    */
 	function metadata($key = null) {
 		return get_in($this->metadata, $key);
-	}
-
-	/// Redirects the client to $url.
-	function redirect_to($url) {
-		http_response_code(303);
-		header("Location: {$url}");
 	}
 
 	/// Returns the HTTP status code of the respsonse.
