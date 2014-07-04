@@ -600,13 +600,15 @@ class DecisionCore {
 		return static::decisionTest(static::callResource('deleteCompleted', $state), true, 'v3o20', 202, $state);
 	}
 
-	// TODO
 	/**
 	 * Redirect?
+	 *
+	 * Should the client be redirected to the newly created resource?
 	 */
 	protected static function decision_v3n11(DecisionCoreState $state) {
-		$postIsCreate = static::callResource('postIsCreate', $state);
-		return static::errorResponse('Not implemented yet', $state, 501);
+		$location = static::callResource('createPath', $state);
+		$state->request->add_header('Location', $location);
+		return static::decisionTest($location, null, 'v3p11', 303, $state);
 	}
 
 	/**

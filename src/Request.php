@@ -24,11 +24,17 @@ class Request {
 		$this->headers = static::parse_headers();
 	}
 
+	/// Returns true if the object represents a HTTP GET request.
+	function is_get() { return $_SERVER['REQUEST_METHOD'] === 'GET'; }
+
+	/// Returns true if the object represents a HTTP PUT request.
+	function is_put() { return $_SERVER['REQUEST_METHOD'] === 'PUT'; }
+
 	/// Returns true if the object represents a HTTP POST request.
 	function is_post() { return $_SERVER['REQUEST_METHOD'] === 'POST'; }
 
-	/// Returns true if the object represents a HTTP GET request.
-	function is_get() { return $_SERVER['REQUEST_METHOD'] === 'GET'; }
+	/// Returns true if the object represents a HTTP DELETE request.
+	function is_delete() { return $_SERVER['REQUEST_METHOD'] === 'DELETE'; }
 
 	/// Returns true if the request has been made via AJAX.
 	function is_ajax() {
