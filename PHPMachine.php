@@ -2,13 +2,13 @@
 
 namespace PHPMachine;
 
-require dirname(__FILE__).'/PHPMachine/Loader.php';
+require dirname(__FILE__).'/src/Loader.php';
 
 \PHPMachine\Loader::autoload();
 
 function http_request($dispatchPath) {
-	$request = new \PHPMachine\Http\Request();
-	$response = new \PHPMachine\Http\Response();
+	$request = new \PHPMachine\Request();
+	$response = new \PHPMachine\Response();
 	$response = execute_request($request, $response, $dispatchPath);
 	$response->serve();
 }
