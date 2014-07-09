@@ -3,6 +3,8 @@
 # Represents a HTTP request
 class Request {
 	private $headers = array();
+	private $put_data = null;
+	private $path_info = null;
 
 	protected static function parse_headers() {
 		foreach ($_SERVER as $name => $value) {
@@ -20,8 +22,10 @@ class Request {
 		return $headers;
 	}
 
-	function __construct() {
+	function __construct($path_vars = array(), $path_matches = array()) {
 		$this->headers = static::parse_headers();
+		$this->path_info['vars'] = $path_vars;
+		$this->path_info['matches'] = $path_matches;
 	}
 
 	/// Returns true if the object represents a HTTP GET request.
@@ -50,13 +54,23 @@ class Request {
 	}
 
 	/**
+		Returns the paths segment matched by $key.
+
+		If $key is not present in the path, $fallback is returned if specified,
+		otherwise null is returned.
+	 */
+	function path_var($key, $fallback = null) {
+		return get_in($this->path_info['vars'], $key, $fallback);
+	}
+
+	/**
 		Returns the query parameter data associated with the request at $key.
 
 		If $key is not present in the query data, $fallback is returned. If $key is
 		not specified or null, an associative array of all query data key, value pairs
 		is returned.
 	 */
-	function query_param($key, $fallback = null) {
+	function query_param($key = null, $fallback = null) {
 		return get_in($_GET, $key, $fallback);
 	}
 
@@ -69,6 +83,20 @@ class Request {
 	 */
 	function post_data($key = null, $fallback = null) {
 		return get_in($_POST, $key, $fallback);
+	}
+
+	/**
+		Returns the put data associated with the request at $key.
+
+		If $key is not present in the put data, $fallback is returned. If $key is
+		not specified or null, an associative array of all put data key, value pairs
+		is returned.
+	 */
+	function put_data($key = null, $fallback = null) {
+		if (is_null($this->put_data)) {
+			parse_str(file_get_contents("php://input"), $this->put_data);
+		}
+		return get_in($this->put_data, $key, $fallback);
 	}
 
 	/// Returns the langauge code for the request.

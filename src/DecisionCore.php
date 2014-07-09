@@ -627,7 +627,7 @@ class DecisionCore {
 			return static::respond(409, $state);
 		}
 		else {
-			$accept = static::acceptHelper();
+			$accept = static::acceptHelper($state);
 			switch ($accept[0]) {
 				case 'respond':
 					return static::respond($accept[1], $state);
@@ -733,7 +733,7 @@ class DecisionCore {
 			return static::respond(409, $state);
 		}
 		else {
-			$accept = static::acceptHelper();
+			$accept = static::acceptHelper($state);
 			switch ($accept[0]) {
 				case 'respond':
 					return static::respond($accept[1], $state);
@@ -764,6 +764,24 @@ class DecisionCore {
 	protected static function encodeBody($body, DecisionCoreState $state) {
 		$charset = $state->response->metadata('chosen-charset');
 		return $body;
+	}
+
+	protected static function acceptHelper(DecisionCoreState $state) {
+		$contentType = $state->request->header('Content-Type');
+		if (is_null($contentType) || empty($contentType)) {
+			$contentType = 'application/octet-stream';
+		}
+		// TODO: Parse mediatype and parameters from content type and set this properly.
+		$state->response->add_metadata('mediaparams', $contentType);
+		// Find the content type handler.
+		$contentTypesAccepted = static::callResource('contentTypesAccepted', $state);
+		if (isset($contentTypesAccepted[$contentType])) {
+			$handler = $contentTypesAccepted[$contentType];
+			$ok = static::callResource($handler, $state);
+		} else {
+			return array('respond', 415);
+		}
+		return $ok ? array('') : array('error', 500);
 	}
 }
 
