@@ -19,8 +19,8 @@ function execute_request(Request $request, Response $response, $dispatchPath) {
 	$result = Dispatcher::dispatch($dispatchList, $request);
 
 	if ($result[0]===false) {
-		$response->set_status_code(400);
-		$body = ErrorHandler::handleError(400, $request, 'Resource was not found');
+		$response->set_status_code(404);
+		$body = ErrorHandler::handleError(404, $request, 'Resource was not found');
 		$response->write($body);
 		return $response;
 	}
