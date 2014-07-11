@@ -158,8 +158,8 @@ abstract class Resource {
 	 * This will be called on a POST request if postIsCreate returns
 	 * true. If this function returns a path, it should be a valid
 	 * URI part following the dispatcher prefix and the client shall
-	 * redirected to that URI with a 303 See Other. If it does not
-	 * return a path, it must return null.
+	 * redirected to that URI with a 303 See Other. Any other non-string
+	 * return value will not trigger a redirect.
 	 *
 	 * @return string
 	 */
@@ -169,12 +169,16 @@ abstract class Resource {
 
 	/**
 	 * If postIsCreate returns false, then this will be called to
-	 * process any POST requests. If it succeeds, it should return true.
+	 * process any POST requests. If a redirect should occur, this function
+	 * should return the url to redirect to. If an entity is to be returned,
+	 * this function should return true, which will cause content negotiation
+	 * to occur and the relevant content generation function to be called. If
+	 * no entity is to be returned, this function should return false.
 	 *
 	 * @return boolean
 	 */
 	public static function processPost (Request $request, array &$context) {
-		return true;
+		return null;
 	}
 
 	/**

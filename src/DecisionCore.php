@@ -606,9 +606,14 @@ class DecisionCore {
 	 * Should the client be redirected to the newly created resource?
 	 */
 	protected static function decision_v3n11(DecisionCoreState $state) {
-		$location = static::callResource('createPath', $state);
-		$state->response->add_header('Location', $location);
-		return static::decisionTest($location, null, 'v3p11', 303, $state);
+		$method = static::callResource('postIsCreate', $state) ? 'createPath' : 'processPost';
+		$result = static::callResource($method, $state);
+		if ($result === true) {
+			$state->response->write(static::responseBody($state));
+		} else {
+			$state->response->add_header('Location', $result);
+		}
+		return static::decisionTest(is_string($result), true, 303, 'v3p11', $state);
 	}
 
 	/**
@@ -671,8 +676,6 @@ class DecisionCore {
 				$state->response->add_header('ETag', $etag);
 			}
 
-			$contentType = $state->response->metadata('content-type');
-
 			$lastModified = static::callResource('lastModified', $state);
 
 			if ($lastModified) {
@@ -687,14 +690,7 @@ class DecisionCore {
 				$state->response->add_header('Expires', $lastModified);
 			}
 
-			$contentTypesProvided = static::callResource('contentTypesProvided', $state);
-			foreach ($contentTypesProvided as $ct => $fun) {
-				if ($ct == $contentType) {
-					$finalBody = static::callResource($fun, $state);
-					break;
-				}
-			}
-
+			$finalBody = static::responseBody($state);
 		}
 
 		if ($finalBody === null) {
@@ -782,6 +778,18 @@ class DecisionCore {
 			return array('respond', 415);
 		}
 		return $ok ? array('') : array('error', 500);
+	}
+
+	protected static function responseBody(DecisionCoreState $state) {
+		$contentType = $state->response->metadata('content-type');
+		$contentTypesProvided = static::callResource('contentTypesProvided', $state);
+		foreach ($contentTypesProvided as $ct => $fun) {
+			if ($ct == $contentType) {
+				$body = static::callResource($fun, $state);
+				break;
+			}
+		}
+		return $body;
 	}
 }
 

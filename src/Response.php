@@ -131,7 +131,7 @@ class Response {
 	}
 
 	/// Returns true if the response body is blank.
-	function is_blank() { return empty($this->body); }
+	function is_blank() { return empty($this->content); }
 
 	/// Writes $content to the body of the response.
 	function write($content) {
