@@ -64,7 +64,7 @@ class DecisionCore {
 		$response = $state->response;
 
 		if ($code == 404) {
-			$response = ErrorHandler::handleError($code, $request, 'Resource was not found');
+			$response->write(ErrorHandler::handleError($code, $request, 'Resource was not found'));
 		}
 		elseif ($code == 304) {
 			// TODO
