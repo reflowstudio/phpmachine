@@ -86,6 +86,17 @@ class Request {
 	}
 
 	/**
+		Returns the cookie data associated with the request at $key.
+
+		If $key is not present in the cookie data, $fallback is returned. If $key is
+		not specified or null, an associative array of all cookie data key, value pairs
+		is returned.
+	 */
+	function cookie_data($key = null, $fallback = null) {
+		return get_in($_COOKIE, $key, $fallback);
+	}
+
+	/**
 		Returns the put data associated with the request at $key.
 
 		If $key is not present in the put data, $fallback is returned. If $key is
