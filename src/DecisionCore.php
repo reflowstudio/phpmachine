@@ -240,28 +240,26 @@ class DecisionCore {
 	 * Accept exists?
 	 */
 	protected static function decision_v3c3(DecisionCoreState $state) {
-		$accept = $state->request->header('accept');
-		if ($accept === null) {
-			$types = static::callResource('contentTypesProvided', $state);
-			$keys = array_keys($types);
-			$state->response->add_metadata('content-type', $keys[0]);
-			return 'v3d4';
-		}
-		else {
-			return 'v3c4';
-		}
+		// Set a default content type for the response irrespective of the state of the Accept header
+		$types = static::callResource('contentTypesProvided', $state);
+		reset($types);
+		$state->response->add_metadata('content-type', key($types));
+		return static::decisionTest($state->request->header('Accept'), null, 'v3c4', 'v3d4', $state);
 	}
 
 	/**
 	 * Acceptable media type available?
 	 */
 	protected static function decision_v3c4(DecisionCoreState $state) {
+		// Until media type matching is implemented, abandon this and return the next stage based on the first content type provided
+		return 'v3d4';
+
+		// This is the necessary data for media type matching. Consider the PECL HTTP extension?
 		$types = static::callResource('contentTypesProvided', $state);
-		$accept = $state->request->header('accept');
+		$accept = $state->request->header('Accept');
 
 		// choose media type
 		$type = null;
-
 		if ($type === null) {
 			return static::respond(406, $state);
 		}
@@ -275,28 +273,56 @@ class DecisionCore {
 	 * Accept-Language exists?
 	 */
 	protected static function decision_v3d4(DecisionCoreState $state) {
-		return static::decisionTest($state->request->header('accept-language'), null, 'v3e5', 'v3d5', $state);
+		return static::decisionTest($state->request->header('Accept-Language'), null, 'v3e5', 'v3d5', $state);
 	}
 
 	/**
 	 * Acceptable Language available?
 	 */
 	protected static function decision_v3d5(DecisionCoreState $state) {
-		return static::decisionTest(static::callResource('languageAvailable', $state), null, 'v3e5', 406, $state);
+		// Until language matching is implemented, abandon this and return the next stage
+		$state->response->add_metadata('content-language', 'en');
+		return 'v3e5';
+
+		// This is the necessary data for language matching, default to English
+		$languages = static::callResource('languagesProvided', $state);
+		$accept_language = $state->request->header('Accept-Language');
+
+		// choose language
+		$lang = null;
+		if ($lang === null) {
+			return static::respond(406, $state);
+		}
+		else {
+			$state->response->add_metadata('content-language', $lang);
+			return 'v3e5';
+		}
 	}
 
 	/**
 	 * Accept-Charset exists?
 	 */
 	protected static function decision_v3e5(DecisionCoreState $state) {
-		$charset = $state->request->header('accept-charset');
+		return static::decisionTest($state->request->header('Accept-Charset'), null, 'v3e6', 'v3f6', $state);
+	}
+
+	/**
+	 * Acceptable Charset available?
+	 */
+	protected static function decision_v3e6(DecisionCoreState $state) {
+		// Until character set matching is implemented, abandon this and return the next stage
+		return 'v3f6';
+
+		// Query the resource for the character sets it provides, then match?
+		$charset = $state->request->header('Accept-Charset');
+
 		if ($charset === null) {
 			// TODO choose a charset
 			$charset = true;
 			return static::decisionTest($charset, false, 406, 'v3f6', $state);
 		}
 		else {
-			return 'v3e6';
+			return 'v3f6';
 		}
 	}
 
@@ -304,6 +330,9 @@ class DecisionCore {
 	 * Accept-Encoding exists?
 	 */
 	protected static function decision_v3f6(DecisionCoreState $state) {
+		// Until character encoding matching is implemented, abandon this and return the next stage
+		return 'v3g7';
+
 		$contentType = $state->response->metadata('content-type');
 		$charset = $state->response->metadata('chosen-charset');
 
@@ -314,15 +343,15 @@ class DecisionCore {
 			$charset = '; charset=' . $charset;
 		}
 
-		$state->response->add_header('content-type', $charset);
+		$state->response->add_header('Content-Type', $charset);
 
-		$encoding = $state->request->header('accept-encoding');
+		$encoding = $state->request->header('Accept-Encoding');
 		if ($encoding === null) {
 			// TODO choose an encoding
 			return static::decisionTest('identity;q=1.0,*;q=0.5', false, 406, 'v3g7', $state);
 		}
 		else {
-			$state->response->add_header('content-type', $type);
+			$state->response->add_header('Content-Type', $type);
 			return 'v3f7';
 		}
 	}
@@ -332,7 +361,7 @@ class DecisionCore {
 	 */
 	protected static function decision_v3f7(DecisionCoreState $state) {
 		// TODO choose encoding
-		$encoding = $state->request->header('accept-encoding');
+		$encoding = $state->request->header('Accept-Encoding');
 		return static::decisionTest($encoding, false, 406, 'v3g7', $state);
 	}
 
@@ -352,21 +381,21 @@ class DecisionCore {
 	 * If-Match exists?
 	 */
 	protected static function decision_v3g8(DecisionCoreState $state) {
-		return static::decisionTest($state->request->header('if-match'), null, 'v3h10', 'v3g9', $state);
+		return static::decisionTest($state->request->header('If-Match'), null, 'v3h10', 'v3g9', $state);
 	}
 
 	/**
 	 * If-Match: * exists?
 	 */
 	protected static function decision_v3g9(DecisionCoreState $state) {
-		return static::decisionTest($state->request->header('if-match'), '*', 'v3h10', 'v3g11', $state);
+		return static::decisionTest($state->request->header('If-Match'), '*', 'v3h10', 'v3g11', $state);
 	}
 
 	/**
 	 * ETag in If-Match
 	 */
 	protected static function decision_v3g11(DecisionCoreState $state) {
-		$etags = $request->header('if-match');
+		$etags = $request->header('If-Match');
 		// TODO parse etags
 		return static::decisionTest(
 				static::callResource('generateEtag', $state),
@@ -378,21 +407,21 @@ class DecisionCore {
 	 * If-Match exists?
 	 */
 	protected static function decision_v3h7(DecisionCoreState $state) {
-		return static::decisionTest($state->request->header('if-match'), null, 'v3i7', 412, $state);
+		return static::decisionTest($state->request->header('If-Match'), null, 'v3i7', 412, $state);
 	}
 
 	/**
 	 * If-unmodified-since exists?
 	 */
 	protected static function decision_v3h10(DecisionCoreState $state) {
-		return static::decisionTest($state->request->header('if-unmodified-since'), null, 'v3i12', 'v3i11', $state);
+		return static::decisionTest($state->request->header('If-Unmodified-Since'), null, 'v3i12', 'v3i11', $state);
 	}
 
 	/**
 	 * I-UM-S is valid date?
 	 */
 	protected static function decision_v3h11(DecisionCoreState $state) {
-		$date = $state->request->header('if-unmodified-since');
+		$date = $state->request->header('If-Unmodified-Since');
 		// Check date format
 		$result = true;
 		return static::decisionTest($result, false, 'v3i12', 'v3h12', $state);
@@ -402,7 +431,7 @@ class DecisionCore {
 	 * Last-Modified > I-UM-S?
 	 */
 	protected static function decision_v3h12(DecisionCoreState $state) {
-		$date = $state->request->header('if-unmodified-since');
+		$date = $state->request->header('If-Unmodified-Since');
 		// Convert
 		$reqPhpDate = 0;
 		$resPhpDate = static::callResource('lastModified', $state);
@@ -442,14 +471,14 @@ class DecisionCore {
 	 * If-None-Match exists?
 	 */
 	protected static function decision_v3i12(DecisionCoreState $state) {
-		return static::decisionTest($state->request->header('if-none-match'), null, 'v3l13', 'v3i13', $state);
+		return static::decisionTest($state->request->header('If-None-Match'), null, 'v3l13', 'v3i13', $state);
 	}
 
 	/**
 	 * If-None-Match: * exists?
 	 */
 	protected static function decision_v3i13(DecisionCoreState $state) {
-		return static::decisionTest($state->request->header('if-none-match'), '*', 'v3j18', 'v3k13', $state);
+		return static::decisionTest($state->request->header('If-None-Match'), '*', 'v3j18', 'v3k13', $state);
 	}
 
 	/**
@@ -492,7 +521,7 @@ class DecisionCore {
 	 * Etag in if-none-match?
 	 */
 	protected static function decision_v3k13(DecisionCoreState $state) {
-		$etags = $state->request->header('if-none-match');
+		$etags = $state->request->header('If-None-Match');
 		// TODO parse etags
 		return static::decisionTest(
 				static::callResource('genereateEtag', $state),
@@ -533,14 +562,14 @@ class DecisionCore {
 	 * IMS exists?
 	 */
 	protected static function decision_v3l13(DecisionCoreState $state) {
-		return static::decisionTest($state->request->header('if-modified-since'), null, 'v3m16', 'v3l14', $state);
+		return static::decisionTest($state->request->header('If-Modified-Since'), null, 'v3m16', 'v3l14', $state);
 	}
 
 	/**
 	 * IMS is valid date?
 	 */
 	protected static function decision_v3l14(DecisionCoreState $state) {
-		$date = $state->request->header('if-unmodified-since');
+		$date = $state->request->header('If-Unmodified-Since');
 		// Check date format
 		$result = true;
 		return static::decisionTest($result, false, 'v3m16', 'v3l15', $state);
@@ -551,7 +580,7 @@ class DecisionCore {
 	 */
 	protected static function decision_v3h15(DecisionCoreState $state) {
 		$nowDateTime = gmdate("Y-m-d\TH:i:s\Z");
-		$requestDate = $state->request->header("if-modified-since");
+		$requestDate = $state->request->header("If-Modified-Since");
 		// Convert date
 		$reqPhpDate = 0;
 		return static::decisionTest($reqPhpDate > $nowDateTime, true, 'v3m16', 'v3l17', $state);
@@ -561,7 +590,7 @@ class DecisionCore {
 	 * Last-Modified > IMS?
 	 */
 	protected static function decision_v3l17(DecisionCoreState $state) {
-		$date = $state->request->header('if-unmodified-since');
+		$date = $state->request->header('If-Unmodified-Since');
 		// Convert
 		$reqPhpDate = 0;
 		$resPhpDate = static::callResource('lastModified', $state);
@@ -783,6 +812,7 @@ class DecisionCore {
 	protected static function responseBody(DecisionCoreState $state) {
 		$contentType = $state->response->metadata('content-type');
 		$contentTypesProvided = static::callResource('contentTypesProvided', $state);
+		$body = '';
 		foreach ($contentTypesProvided as $ct => $fun) {
 			if ($ct == $contentType) {
 				$body = static::callResource($fun, $state);
