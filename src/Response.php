@@ -100,8 +100,18 @@ class Response {
 		$key then an associative array of all $key, $value header pairs
 		is returned.
 	 */
-	function header($key = null) {
-		return get_in($this->headers, $key);
+	function header($key = null, $fallback = null) {
+		// Headers are case insensitive, but a case-sensitive match is fast so we try that first
+		if(isset($this->headers[$key])) {
+			return $this->headers[$key];
+		} else {
+			$value = null;
+			reset($this->headers);
+			while((list($field_name, $field_value) = each($this->headers))!==false && !isset($value)) {
+				$value = (strcasecmp($field_name, $key)==0 ? $field_value : null);
+			}
+			return (isset($value) ? $value : $fallback);
+		}
 	}
 
 	/// Adds the $key, $value pair as metadata for the response.
