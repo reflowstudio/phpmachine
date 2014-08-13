@@ -62,6 +62,22 @@ class Request {
 	function path_var($key, $fallback = null) {
 		return get_in($this->path_info['vars'], $key, $fallback);
 	}
+	function path_vars() {
+		return $this->path_info['vars'];
+	}
+
+	/**
+		Returns the paths segment matched by $key.
+
+		If $key is not present in the path, $fallback is returned if specified,
+		otherwise null is returned.
+	 */
+	function path_match($key, $fallback = null) {
+		return get_in($this->path_info['matches'], $key, $fallback);
+	}
+	function path_matches() {
+		return $this->path_info['matches'];
+	}
 
 	/**
 		Returns the query parameter data associated with the request at $key.
