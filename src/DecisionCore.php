@@ -243,6 +243,7 @@ class DecisionCore {
 		// Set a default content type for the response irrespective of the state of the Accept header
 		$types = static::callResource('contentTypesProvided', $state);
 		reset($types);
+		$state->response->add_header('Content-Type', key($types));
 		$state->response->add_metadata('content-type', key($types));
 		return static::decisionTest($state->request->header('Accept'), null, 'v3c4', 'v3d4', $state);
 	}
@@ -812,13 +813,7 @@ class DecisionCore {
 	protected static function responseBody(DecisionCoreState $state) {
 		$contentType = $state->response->metadata('content-type');
 		$contentTypesProvided = static::callResource('contentTypesProvided', $state);
-		$body = '';
-		foreach ($contentTypesProvided as $ct => $fun) {
-			if ($ct == $contentType) {
-				$body = static::callResource($fun, $state);
-				break;
-			}
-		}
+		$body = isset($contentTypesProvided[$contentType]) ? static::callResource($contentTypesProvided[$contentType], $state) : '';
 		return $body;
 	}
 }
