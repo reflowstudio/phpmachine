@@ -12,7 +12,7 @@ define('MATCH_ALL', '*');
 class Dispatcher {
 
 	public static function dispatch(array $dispatchList, Request $request) {
-		$uri = $request->uri();
+		$uri = $request->abs_path();
 		$path = explode(SEPARATOR, $uri);
 		// Fix for PHP  it takes the /.. amd adds a space in the first position. We don't need it because all paths will start with /
 		if ($path[0] == '') {
